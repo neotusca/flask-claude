@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>사용자 관리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --accent: #6c63ff;
+      --accent-glow: rgba(108,99,255,0.25);
+      --text: #e8e8f0;
+      --muted: #7070a0;
+      --success: #4fffb0;
+      --error: #ff5c7a;
+      --warning: #ffd060;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 55% 45% at 75% 20%, rgba(108,99,255,0.09) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 0.8rem; }
+
+    .header-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .admin-chip {
+      padding: 0.2rem 0.6rem;
+      background: rgba(108,99,255,0.15);
+      border: 1px solid rgba(108,99,255,0.35);
+      border-radius: 6px;
+      font-size: 0.72rem;
+      color: #a78bfa;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.04em;
+    }
+
+    .close-btn {
+      padding: 0.35rem 0.9rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .close-btn:hover { border-color: var(--error); color: var(--error); }
+
+    /* ── 본문 ── */
+    main {
+      position: relative; z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* 플래시 */
+    .flash { padding: 0.65rem 1rem; border-radius: 10px; font-size: 0.82rem; margin-bottom: 0.5rem; border: 1px solid; }
+    .flash.success { background: rgba(79,255,176,0.08);  border-color: rgba(79,255,176,0.25);  color: var(--success); }
+    .flash.error   { background: rgba(255,92,122,0.08);  border-color: rgba(255,92,122,0.25);  color: var(--error);   }
+    .flash.warning { background: rgba(255,208,96,0.08);  border-color: rgba(255,208,96,0.25);  color: var(--warning); }
+
+    /* ── 사용자 추가 카드 ── */
+    .add-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem 1.6rem;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .add-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto auto;
+      gap: 0.7rem;
+      align-items: end;
+    }
+
+    @media (max-width: 640px) {
+      .add-form { grid-template-columns: 1fr 1fr; }
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.04em;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-group select option { background: #1a1a24; }
+
+    .submit-btn {
+      padding: 0.6rem 1.2rem;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s, transform 0.15s;
+      align-self: end;
+      height: 36px;
+    }
+    .submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* ── 사용자 테이블 카드 ── */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      animation: fadeUp 0.4s ease 0.1s both;
+    }
+
+    .table-header {
+      padding: 1rem 1.4rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-header-title {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .user-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.15rem 0.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    thead th {
+      padding: 0.7rem 1.4rem;
+      text-align: left;
+      font-size: 0.73rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(42,42,58,0.5);
+      transition: background 0.15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(108,99,255,0.05); }
+
+    td { padding: 0.85rem 1.4rem; vertical-align: middle; }
+
+    .td-id {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      color: var(--muted);
+      width: 48px;
+    }
+
+    .td-username {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .td-username .me-tag {
+      font-size: 0.68rem;
+      color: #a78bfa;
+      margin-left: 0.4rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 400;
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+    }
+
+    .role-badge.admin {
+      background: rgba(108,99,255,0.12);
+      border: 1px solid rgba(108,99,255,0.3);
+      color: #a78bfa;
+    }
+
+    .role-badge.user {
+      background: rgba(79,255,176,0.08);
+      border: 1px solid rgba(79,255,176,0.2);
+      color: var(--success);
+    }
+
+    .td-date {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .delete-form button {
+      padding: 0.3rem 0.8rem;
+      background: transparent;
+      border: 1px solid rgba(255,92,122,0.25);
+      border-radius: 7px;
+      color: rgba(255,92,122,0.6);
+      font-family: inherit;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .delete-form button:hover {
+      background: rgba(255,92,122,0.1);
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .delete-form button:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <span class="header-title">👥 사용자 관리</span>
+      <span class="admin-chip">ADMIN ONLY</span>
+    </div>
+    <a href="javascript:window.close()" class="close-btn">✕ 닫기</a>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="margin-bottom:1rem">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- 사용자 추가 폼 -->
+    <div class="add-card">
+      <div class="card-title">사용자 추가</div>
+      <form method="POST" action="{{ url_for('admin_add_user') }}" class="add-form">
+        <div class="form-group">
+          <label for="new-username">아이디</label>
+          <input type="text" id="new-username" name="username"
+                 placeholder="새 아이디" autocomplete="off" required/>
+        </div>
+        <div class="form-group">
+          <label for="new-password">비밀번호 (6자 이상)</label>
+          <input type="password" id="new-password" name="password"
+                 placeholder="••••••••" required/>
+        </div>
+        <div class="form-group">
+          <label for="new-role">권한</label>
+          <select id="new-role" name="role">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button type="submit" class="submit-btn">추가</button>
+      </form>
+    </div>
+
+    <!-- 사용자 목록 테이블 -->
+    <div class="table-card">
+      <div class="table-header">
+        <span class="table-header-title">전체 사용자</span>
+        <span class="user-count">{{ users | length }}명</span>
+      </div>
+
+      {% if users %}
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>아이디</th>
+            <th>권한</th>
+            <th>생성일시</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="td-id">{{ u.id }}</td>
+            <td class="td-username">
+              {{ u.username }}
+              {% if u.username == session['username'] %}
+                <span class="me-tag">(나)</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="role-badge {{ u.role }}">
+                {{ '👑 Admin' if u.role == 'admin' else '👤 User' }}
+              </span>
+            </td>
+            <td class="td-date">{{ u.created_at[:16] if u.created_at else '—' }}</td>
+            <td>
+              <form method="POST"
+                    action="{{ url_for('admin_delete_user', user_id=u.id) }}"
+                    class="delete-form"
+                    onsubmit="return confirm('{{ u.username }} 계정을 삭제하시겠습니까?')">
+                <button type="submit"
+                        {% if u.username == session['username'] %}disabled title="자신은 삭제 불가"{% endif %}>
+                  삭제
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty-state">등록된 사용자가 없습니다.</div>
+      {% endif %}
+    </div>
+  </main>
+</body>
+</html>

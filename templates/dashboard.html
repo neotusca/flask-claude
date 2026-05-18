@@ -207,6 +207,53 @@
     }
 
     @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+    /* 관리자 패널 */
+    .admin-panel {
+      background: var(--surface);
+      border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 14px;
+      padding: 1.4rem 1.6rem;
+      margin-top: 1.5rem;
+      animation: fadeUp 0.5s ease 0.3s both;
+    }
+
+    .admin-panel-header {
+      margin-bottom: 1rem;
+    }
+
+    .admin-badge {
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #a78bfa;
+      font-weight: 500;
+    }
+
+    .admin-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.3rem;
+      background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(167,139,250,0.1));
+      border: 1px solid rgba(108,99,255,0.4);
+      border-radius: 10px;
+      color: #c4b5fd;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+
+    .admin-btn:hover {
+      background: linear-gradient(135deg, rgba(108,99,255,0.25), rgba(167,139,250,0.18));
+      border-color: rgba(108,99,255,0.7);
+      transform: translateY(-1px);
+    }
+
+    .admin-btn .ext-icon { opacity: 0.6; margin-left: 2px; }
   </style>
 </head>
 <body>
@@ -247,15 +294,36 @@
       </div>
       <div class="stat-card">
         <div class="stat-label">계정 등급</div>
-        <div class="stat-value">{{ 'Admin' if username == 'admin' else 'User' }}</div>
-        <div class="stat-icon">{{ '👑' if username == 'admin' else '👤' }}</div>
+        <div class="stat-value">{{ 'Admin' if role == 'admin' else 'User' }}</div>
+        <div class="stat-icon">{{ '👑' if role == 'admin' else '👤' }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">세션 보안</div>
-        <div class="stat-value">SHA-256</div>
+        <div class="stat-value">bcrypt</div>
         <div class="stat-icon">🛡️</div>
       </div>
     </div>
+
+    {% if role == 'admin' %}
+    <div class="admin-panel">
+      <div class="admin-panel-header">
+        <span class="admin-badge">👑 관리자 메뉴</span>
+      </div>
+      <a href="{{ url_for('admin_users') }}" target="_blank" class="admin-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        사용자 목록 보기
+        <svg class="ext-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </a>
+    </div>
+    {% endif %}
 
     <div class="info-card">
       <h3>세션 정보</h3>

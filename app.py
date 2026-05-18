@@ -4,9 +4,6 @@ import bcrypt
 import sqlite3
 import os
 
-APP_HOST='0.0.0.0'
-APP_PORT=5000
-
 app = Flask(__name__)
 # 실제 운영 환경에서는 환경변수로 관리: os.environ.get("SECRET_KEY")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
@@ -88,6 +85,20 @@ def login_required(f):
     return decorated
 
 
+def admin_required(f):
+    """admin 권한이 없는 사용자를 차단"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "username" not in session:
+            flash("로그인이 필요합니다.", "warning")
+            return redirect(url_for("login"))
+        if session.get("role") != "admin":
+            flash("관리자 권한이 필요합니다.", "error")
+            return redirect(url_for("dashboard"))
+        return f(*args, **kwargs)
+    return decorated
+
+
 # ──────────────────────────────────────────────
 # 라우트
 # ──────────────────────────────────────────────
@@ -144,9 +155,78 @@ def logout():
 
 
 # ──────────────────────────────────────────────
+# 관리자 전용: 사용자 관리
+# ──────────────────────────────────────────────
+
+@app.route("/admin/users")
+@admin_required
+def admin_users():
+    """사용자 목록 페이지 (별도 창)"""
+    with get_db() as conn:
+        users = conn.execute(
+            "SELECT id, username, role, created_at FROM users ORDER BY id"
+        ).fetchall()
+    return render_template("users.html", users=users)
+
+
+@app.route("/admin/users/add", methods=["POST"])
+@admin_required
+def admin_add_user():
+    """사용자 추가 처리"""
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+    role     = request.form.get("role", "user")
+
+    # 입력 검증
+    if not username or not password:
+        flash("아이디와 비밀번호는 필수입니다.", "error")
+        return redirect(url_for("admin_users"))
+    if role not in ("admin", "user"):
+        flash("올바르지 않은 권한입니다.", "error")
+        return redirect(url_for("admin_users"))
+    if len(password) < 6:
+        flash("비밀번호는 6자 이상이어야 합니다.", "error")
+        return redirect(url_for("admin_users"))
+
+    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    try:
+        with get_db() as conn:
+            conn.execute(
+                "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+                (username, hashed, role),
+            )
+            conn.commit()
+        flash(f"사용자 '{username}'이(가) 추가되었습니다.", "success")
+    except Exception:
+        flash(f"이미 존재하는 아이디입니다: {username}", "error")
+
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/users/delete/<int:user_id>", methods=["POST"])
+@admin_required
+def admin_delete_user(user_id):
+    """사용자 삭제 처리 (자기 자신 삭제 불가)"""
+    with get_db() as conn:
+        target = conn.execute(
+            "SELECT username FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if not target:
+            flash("존재하지 않는 사용자입니다.", "error")
+            return redirect(url_for("admin_users"))
+        if target["username"] == session["username"]:
+            flash("자기 자신은 삭제할 수 없습니다.", "error")
+            return redirect(url_for("admin_users"))
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+    flash(f"사용자 '{target['username']}'이(가) 삭제되었습니다.", "success")
+    return redirect(url_for("admin_users"))
+
+
+# ──────────────────────────────────────────────
 # 앱 시작
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
     init_db()   # 테이블 생성 + 초기 계정 삽입
-    app.run(debug=True, host=APP_HOST, port=APP_PORT)
+    app.run(debug=True, port=5000)
