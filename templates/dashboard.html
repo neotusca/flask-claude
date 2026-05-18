@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>대시보드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #2a2a3a;
+      --accent: #6c63ff;
+      --accent-glow: rgba(108,99,255,0.3);
+      --text: #e8e8f0;
+      --muted: #7070a0;
+      --success: #4fffb0;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 50% 40% at 10% 20%, rgba(108,99,255,0.1) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 50% at 90% 80%, rgba(79,255,176,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      font-family: 'DM Mono', monospace;
+      font-size: 1rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #fff 30%, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+
+    .nav-user {
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .nav-user span {
+      color: #a78bfa;
+      font-weight: 500;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .logout-btn {
+      padding: 0.4rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .logout-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+
+    /* 플래시 메시지 */
+    .flash-messages { margin-bottom: 1.5rem; }
+    .flash {
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      font-size: 0.83rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid;
+    }
+    .flash.success { background: rgba(79,255,176,0.08); border-color: rgba(79,255,176,0.25); color: var(--success); }
+    .flash.info    { background: rgba(96,207,255,0.08); border-color: rgba(96,207,255,0.25); color: #60cfff; }
+
+    /* 환영 섹션 */
+    .welcome-section {
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .welcome-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .welcome-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .welcome-title em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent), #a78bfa, var(--success));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* 상태 카드 그리드 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.5s ease 0.1s both;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.3rem 1.4rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .stat-card:hover { border-color: rgba(108,99,255,0.4); transform: translateY(-2px); }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), #a78bfa);
+    }
+
+    .stat-label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.6rem; }
+    .stat-value { font-family: 'DM Mono', monospace; font-size: 1.4rem; font-weight: 500; color: var(--text); }
+    .stat-icon { position: absolute; bottom: 1rem; right: 1.2rem; font-size: 1.6rem; opacity: 0.25; }
+
+    /* 정보 카드 */
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.6rem;
+      animation: fadeUp 0.5s ease 0.2s both;
+    }
+
+    .info-card h3 { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1rem; }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(42,42,58,0.6);
+      font-size: 0.88rem;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: var(--muted); }
+    .info-val { font-family: 'DM Mono', monospace; color: var(--text); font-size: 0.85rem; }
+    .badge {
+      padding: 0.2rem 0.6rem;
+      background: rgba(79,255,176,0.12);
+      border: 1px solid rgba(79,255,176,0.3);
+      color: var(--success);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-family: 'DM Mono', monospace;
+    }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">⬡ SECURE APP</div>
+    <div class="nav-right">
+      <div class="nav-user">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>{{ username }}</span> 로 로그인됨
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn">로그아웃</a>
+    </div>
+  </nav>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="welcome-section">
+      <div class="welcome-label">대시보드</div>
+      <div class="welcome-title">안녕하세요, <em>{{ username }}</em>님 👋</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">로그인 상태</div>
+        <div class="stat-value">활성</div>
+        <div class="stat-icon">🔐</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">계정 등급</div>
+        <div class="stat-value">{{ 'Admin' if username == 'admin' else 'User' }}</div>
+        <div class="stat-icon">{{ '👑' if username == 'admin' else '👤' }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">세션 보안</div>
+        <div class="stat-value">SHA-256</div>
+        <div class="stat-icon">🛡️</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>세션 정보</h3>
+      <div class="info-row">
+        <span class="info-key">사용자 ID</span>
+        <span class="info-val">{{ username }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">인증 방식</span>
+        <span class="info-val">Session Cookie</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">비밀번호 해시</span>
+        <span class="info-val">SHA-256</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">상태</span>
+        <span class="badge">● 로그인됨</span>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
