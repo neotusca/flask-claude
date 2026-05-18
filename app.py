@@ -4,6 +4,9 @@ import bcrypt
 import sqlite3
 import os
 
+APP_HOST='0.0.0.0'
+APP_PORT=5000
+
 app = Flask(__name__)
 # 실제 운영 환경에서는 환경변수로 관리: os.environ.get("SECRET_KEY")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
@@ -229,4 +232,4 @@ def admin_delete_user(user_id):
 
 if __name__ == "__main__":
     init_db()   # 테이블 생성 + 초기 계정 삽입
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host=APP_HOST, port=APP_PORT)
